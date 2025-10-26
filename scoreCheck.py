@@ -172,6 +172,16 @@ if new_credit > 80:
     analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
 
 st.write(" ".join(analysis))
+st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")if credit_utilization > 50:
+    analysis.append("Your **credit utilization is high**, which may signal over-reliance on credit — aim for below 30%.")
+if payment_history < 70:
+    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency to gain major improvements.")
+if length_credit_history < 50:
+    analysis.append("A **short credit history** limits your score. Keeping older accounts active can help.")
+if new_credit > 80:
+    analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
+
+st.write(" ".join(analysis))
 st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")    recommendations.append("💳 Add different credit types (e.g., installment + revolving).")
 if new_credit < 60:
     recommendations.append("🧾 Limit **new credit applications**; too many inquiries can lower your score.")

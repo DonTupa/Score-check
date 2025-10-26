@@ -25,7 +25,7 @@ with col1:
     credit_mix = st.slider("Credit Mix (10%)", 0, 100, 75)
     new_credit = st.slider("New Credit (10%)", 0, 100, 60)
 
-# --- BASE SCORE CALC ---
+# --- CALCULATE BASE SCORE ---
 weighted_score = (
     (payment_history / 100) * 0.35 +
     (credit_utilization / 100) * 0.30 +
@@ -37,39 +37,34 @@ fico_score = round(300 + (weighted_score * 550))
 
 # --- SCORE CATEGORY ---
 if fico_score < 580:
-    category = "❌ Poor"
-    color = "red"
-elif 580 <= fico_score < 670:
-    category = "⚠️ Fair"
-    color = "orange"
-elif 670 <= fico_score < 740:
-    category = "✅ Good"
-    color = "green"
-elif 740 <= fico_score < 800:
-    category = "💎 Very Good"
-    color = "blue"
+    category, color = "❌ Poor", "red"
+elif fico_score < 670:
+    category, color = "⚠️ Fair", "orange"
+elif fico_score < 740:
+    category, color = "✅ Good", "green"
+elif fico_score < 800:
+    category, color = "💎 Very Good", "blue"
 else:
-    category = "🏆 Excellent"
-    color = "purple"
+    category, color = "🏆 Excellent", "purple"
 
-# --- DISPLAY RESULTS ---
+# --- DISPLAY CURRENT SCORE ---
 with col2:
     st.header("📊 Current Score")
-    st.metric(label="Estimated FICO Score", value=fico_score)
+    st.metric("Estimated FICO Score", fico_score)
     st.markdown(f"### Category: <span style='color:{color}'>{category}</span>", unsafe_allow_html=True)
     st.progress(min(fico_score / 850, 1.0))
 
 # --- RADAR CHART ---
-factors = ['Payment History', 'Credit Utilization', 'Credit Length', 'Credit Mix', 'New Credit']
+factors = ["Payment History", "Credit Utilization", "Credit Length", "Credit Mix", "New Credit"]
 scores = [payment_history, credit_utilization, length_credit_history, credit_mix, new_credit]
 
 fig_radar = go.Figure()
 fig_radar.add_trace(go.Scatterpolar(
     r=scores + [scores[0]],
     theta=factors + [factors[0]],
-    fill='toself',
-    name='Current Factors',
-    line_color='royalblue'
+    fill="toself",
+    name="Current Factors",
+    line_color="royalblue"
 ))
 fig_radar.update_layout(
     polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
@@ -95,11 +90,11 @@ if credit_mix < 60:
 if new_credit < 60:
     recommendations.append("🧾 Limit **new credit applications**; too many inquiries can lower your score.")
 
-if not recommendations:
-    st.success("🌟 Excellent! Your credit profile looks balanced and strong.")
-else:
+if recommendations:
     for rec in recommendations:
         st.write(rec)
+else:
+    st.success("🌟 Excellent! Your credit profile looks balanced and strong.")
 
 # --- SCORE HISTORY TRACKER ---
 st.divider()
@@ -123,7 +118,6 @@ if st.session_state.score_history:
     df = pd.DataFrame(st.session_state.score_history)
     st.dataframe(df, use_container_width=True)
 
-    # --- Line Chart Trend ---
     st.subheader("📊 Score Trend Over Time")
     fig_line = go.Figure()
     fig_line.add_trace(go.Scatter(
@@ -148,7 +142,6 @@ st.header("🧠 Predictive Scoring Simulation")
 months = st.slider("Select forecast duration (months)", 3, 12, 6)
 improvement_rate = st.slider("Expected improvement rate (%)", 0, 20, 5)
 
-# Basic predictive model (rule-based with slight randomness)
 random_factor = np.random.uniform(-2, 2)
 predicted_factors = [
     min(100, payment_history + improvement_rate * 0.8 + random_factor),
@@ -166,15 +159,14 @@ predicted_weighted_score = (
     (predicted_factors[4] / 100) * 0.10
 )
 predicted_score = round(300 + (predicted_weighted_score * 550))
+delta_val = predicted_score - fico_score
 
 colA, colB = st.columns(2)
 with colA:
     st.metric("Predicted Score (Next Period)", predicted_score)
 with colB:
-    delta_val = predicted_score - fico_score
     st.metric("Change Projection", f"{delta_val:+} points")
 
-# --- Forecast visualization ---
 fig_pred = go.Figure()
 fig_pred.add_trace(go.Scatter(
     x=["Current", f"+{months} Months"],
@@ -196,7 +188,6 @@ st.divider()
 st.header("🤖 AI Insight Summary")
 
 analysis = []
-
 if fico_score >= 800:
     analysis.append("Your credit profile is **exceptional**, reflecting strong payment consistency and responsible borrowing habits.")
 elif fico_score >= 740:
@@ -209,199 +200,17 @@ else:
     analysis.append("Your score is **poor**, indicating several risk factors. Immediate focus on timely payments and reducing debt will help most.")
 
 if credit_utilization > 50:
-    analysis.append("Your **credit utilization is high**, which may signal over-reliance on credit — aim for below 30%.")
+    analysis.append("Your **credit utilization** is high — aim for below 30%.")
 if payment_history < 70:
-    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency to gain major improvements.")
+    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency.")
 if length_credit_history < 50:
-    analysis.append("A **short credit history** limits your score. Keeping older accounts active can help.")
+    analysis.append("Your **credit history** is short; keep older accounts active.")
 if new_credit > 80:
-    analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
+    analysis.append("You’ve opened several new accounts — let them age for stability.")
+if new_credit < 60:
+    analysis.append("You’re not adding much new credit — fine, but occasional responsible credit use helps.")
 
 analysis.append(f"🔮 Forecast suggests your score may reach **{predicted_score}** in the next **{months} months** with moderate improvement habits.")
 
 st.write(" ".join(analysis))
-st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")if new_credit < 60:
-    recommendations.append("🧾 Limit **new credit applications**; too many inquiries can lower your score.")
-
-if not recommendations:
-    st.success("🌟 Excellent! Your credit profile looks balanced and strong.")
-else:
-    for rec in recommendations:
-        st.write(rec)
-
-# --- SCORE HISTORY TRACKER ---
-st.divider()
-st.header("📜 Score History & Trends")
-
-if "score_history" not in st.session_state:
-    st.session_state.score_history = []
-
-if st.button("💾 Save This Simulation"):
-    st.session_state.score_history.append({
-        "Score": fico_score,
-        "Category": category,
-        "Payment History": payment_history,
-        "Credit Utilization": credit_utilization,
-        "Length History": length_credit_history,
-        "Credit Mix": credit_mix,
-        "New Credit": new_credit
-    })
-
-if st.session_state.score_history:
-    df = pd.DataFrame(st.session_state.score_history)
-    st.dataframe(df, use_container_width=True)
-
-    # --- Line Chart Trend ---
-    st.subheader("📊 Score Trend Over Time")
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(
-        y=df["Score"],
-        x=list(range(1, len(df) + 1)),
-        mode="lines+markers",
-        line=dict(color="royalblue", width=3),
-        marker=dict(size=8),
-        name="Credit Score"
-    ))
-    fig_line.update_layout(
-        yaxis=dict(title="FICO Score", range=[300, 850]),
-        xaxis=dict(title="Simulation Run"),
-        height=400
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-# --- AI-STYLE ANALYSIS ---
-st.divider()
-st.header("🤖 AI Insight Summary")
-
-analysis = []
-
-if fico_score >= 800:
-    analysis.append("Your credit profile is **exceptional**, reflecting strong payment consistency and responsible borrowing habits.")
-elif fico_score >= 740:
-    analysis.append("You have a **very good credit profile**. Continue maintaining low credit utilization and a long credit history.")
-elif fico_score >= 670:
-    analysis.append("Your credit is in the **good range** — improving payment history or reducing utilization could elevate it further.")
-elif fico_score >= 580:
-    analysis.append("Your credit is **fair**. Focus on consistent on-time payments and lowering your debt ratio to move upward.")
-else:
-    analysis.append("Your score is **poor**, indicating several risk factors. Immediate focus on timely payments and reducing debt will help most.")
-
-if credit_utilization > 50:
-    analysis.append("Your **credit utilization is high**, which may signal over-reliance on credit — aim for below 30%.")
-if payment_history < 70:
-    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency to gain major improvements.")
-if length_credit_history < 50:
-    analysis.append("A **short credit history** limits your score. Keeping older accounts active can help.")
-if new_credit > 80:
-    analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
-
-st.write(" ".join(analysis))
-st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")if credit_utilization > 50:
-    analysis.append("Your **credit utilization is high**, which may signal over-reliance on credit — aim for below 30%.")
-if payment_history < 70:
-    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency to gain major improvements.")
-if length_credit_history < 50:
-    analysis.append("A **short credit history** limits your score. Keeping older accounts active can help.")
-if new_credit > 80:
-    analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
-
-st.write(" ".join(analysis))
-st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")    recommendations.append("💳 Add different credit types (e.g., installment + revolving).")
-if new_credit < 60:
-    recommendations.append("🧾 Limit **new credit applications**; too many inquiries can lower your score.")
-
-if not recommendations:
-    st.success("🌟 Excellent! Your credit profile looks balanced and strong.")
-else:
-    for rec in recommendations:
-        st.write(rec)
-
-# --- SCORE HISTORY TRACKER ---
-st.divider()
-st.header("📜 Score History & Trends")
-
-if "score_history" not in st.session_state:
-    st.session_state.score_history = []
-
-if st.button("💾 Save This Simulation"):
-    st.session_state.score_history.append({
-        "Score": fico_score,
-        "Category": category,
-        "Payment History": payment_history,
-        "Credit Utilization": credit_utilization,
-        "Length History": length_credit_history,
-        "Credit Mix": credit_mix,
-        "New Credit": new_credit
-    })
-
-if st.session_state.score_history:
-    df = pd.DataFrame(st.session_state.score_history)
-    st.dataframe(df, use_container_width=True)
-
-    # --- Line Chart Trend ---
-    st.subheader("📊 Score Trend Over Time")
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(
-        y=df["Score"],
-        x=list(range(1, len(df) + 1)),
-        mode="lines+markers",
-        line=dict(color="royalblue", width=3),
-        marker=dict(size=8),
-        name="Credit Score"
-    ))
-    fig_line.update_layout(
-        yaxis=dict(title="FICO Score", range=[300, 850]),
-        xaxis=dict(title="Simulation Run"),
-        height=400
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-# --- AI-STYLE ANALYSIS ---
-st.divider()
-st.header("🤖 AI Insight Summary")
-
-# Generate a dynamic narrative based on score and key factors
-analysis = []
-
-if fico_score >= 800:
-    analysis.append("Your credit profile is **exceptional**, reflecting strong payment consistency and responsible borrowing habits.")
-elif fico_score >= 740:
-    analysis.append("You have a **very good credit profile**. Continue maintaining low credit utilization and a long credit history.")
-elif fico_score >= 670:
-    analysis.append("Your credit is in the **good range** — improving payment history or reducing utilization could elevate it further.")
-elif fico_score >= 580:
-    analysis.append("Your credit is **fair**. Focus on consistent on-time payments and lowering your debt ratio to move upward.")
-else:
-    analysis.append("Your score is **poor**, indicating several risk factors. Immediate focus on timely payments and reducing debt will help most.")
-
-if credit_utilization > 50:
-    analysis.append("Your **credit utilization is high**, which may signal over-reliance on credit — aim for below 30%.")
-if payment_history < 70:
-    analysis.append("Your **payment history** shows missed or late payments — prioritize consistency to gain major improvements.")
-if length_credit_history < 50:
-    analysis.append("A **short credit history** limits your score. Keeping older accounts active can help.")
-if new_credit > 80:
-    analysis.append("Opening new accounts responsibly shows growth, but too many at once may slightly lower your score temporarily.")
-
-st.write(" ".join(analysis))
-st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")    recommendations.append("💳 Add different credit types (e.g., installment + revolving).")
-if new_credit < 60:
-    recommendations.append("🧾 Limit **new credit applications**; too many inquiries can lower your score.")
-
-if not recommendations:
-    st.success("🌟 Excellent! Your credit profile looks balanced and strong.")
-else:
-    for rec in recommendations:
-        st.write(rec)
-
-# --- SCORE HISTORY TRACKER ---
-if "score_history" not in st.session_state:
-    st.session_state.score_history = []
-
-if st.button("Save This Simulation"):
-    st.session_state.score_history.append({"Score": fico_score, "Category": category})
-
-if st.session_state.score_history:
-    st.write("### 📜 Score History (This Session)")
-    df = pd.DataFrame(st.session_state.score_history)
-    st.dataframe(df, use_container_width=True)
+st.caption("⚠️ *Generated using simple rule-based AI logic for educational purposes — not financial advice.*")
